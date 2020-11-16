@@ -1,7 +1,15 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import matplotlib.pyplot as plt
-import sys 
+import sys, time
+
+data_size = 333
+
+dataset = twospirals(data_size)
+labels = np.hstack((np.zeros(data_size),np.ones(data_size)))
+plt.scatter(dataset[:,0], dataset[:,1], c = labels)
+plt.axis('equal')
+plt.show()
 
 def twospirals(n_points, noise=.5):
     epsilon = 0.1
@@ -11,32 +19,46 @@ def twospirals(n_points, noise=.5):
     C_1 = np.hstack((d1x,d1y))
     C_2 = np.hstack((-d1x,-d1y))
     return np.vstack((C_1, C_2))
-
-data_size = 1000
-dataset = twospirals(data_size)
-labels = np.hstack((np.zeros(data_size),np.ones(data_size)))
-plt.scatter(dataset[:,0], dataset[:,1], c = labels)
-plt.axis('equal')
-plt.show()
-
-class DBSCAN():  
-    def main_cluster(self, min_p, eps, PLFLAG = 1):
-        global labeled_set
-        sym_set = self.sym_neighbour(self.sorted_distances(eps))
-        c, labeled_set = -1, [None]*data_size*2                                     #Init for loop counter and labeling array
-        for x in sym_set:
-            c += 1
-            if (x == [] and labeled_set[c] is None):
-                labeled_set[c] = [-99,-1]                                           #[-99,-1] = noise
-            elif (labeled_set[c] is not None):
-                continue
-            else:
-                self.label(c, sym_set[c],sym_set, min_p)
-        self.plotting(labeled_set)
     
-    def plotting(self, labeled_set):
+if (data_size > 750):
+    sys.setrecursionlimit(10**6)
+    
+class DBSCAN():  
+    def main_cluster(self, min_p = [2], eps = [1.7], TESTING_FLAGS = [1,1]):
+        global labeled_set
+        timer, s_timer = time.time(), time.time()
+        for k in eps:
+            sym_set = self.sym_neighbour(self.sorted_distances(k))
+            for i in min_p:
+                c, labeled_set = -1, [None]*data_size*2                                     #Init for loop counter and labeling array
+                for x in sym_set:
+                    c += 1
+                    if (x == [] and labeled_set[c] is None):
+                        labeled_set[c] = [-99,-1]                                           #[-99,-1] = noise
+                    elif (labeled_set[c] is not None):
+                        continue
+                    else:
+                        self.label(c, sym_set[c], sym_set, i)
+                if (TESTING_FLAGS[0] == 1):
+                    self.scatter_plotting(labeled_set)
+                if (TESTING_FLAGS[1] == 1):
+                    print("Normalized Runtime:", time.time() - timer, "seconds")
+                    print("Actual Runtime: ", time.time() - s_timer , "seconds")
+                    print("min_p:", i)
+                    print("epsilon:", k)
+                s_timer = time.time()
+                print("--------------------------------------------")
+
+    
+    def scatter_plotting(self, labeled_set):
         plt.scatter(dataset[:,0], dataset[:,1], c = [x[0] for x in labeled_set])
         plt.axis('equal')
+        plt.show()
+
+    def plotter(self, x, y, xlabel, ylabel):
+        plt.plot(x, y)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
         plt.show()
 
     def label(self, c, sub_set, sym_set, min_p, depth = 0, overwriter = -1):        #Labels every cluster
@@ -92,6 +114,10 @@ class DBSCAN():
             euclid_set = []
         return(comp_set)
 
+#Main_cluster is the method to test this code.
+#min_p <- [0,...,n]: DBSCAN for every given min_p
+#eps <- [0,...,n]: DBSCAN for every given eps
+#TESTING_FLAGS <-[0|1,0|1]: [0] plots cluster, [1] prints runtime/min_p/eps
 db = DBSCAN()
-db.main_cluster(2,1.8)
+db.main_cluster([1,2,3], [1.5,1.7,1.9])
 
